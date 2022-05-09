@@ -63,7 +63,7 @@ spec:
               port: 80
             initialDelaySeconds: 15 
             periodSeconds: 30
-            failureThreshold: 10
+            failureThreshold: 3
           envFrom:
             - configMapRef:
                 name: portal-configmap
