@@ -40,7 +40,7 @@ spec:
       labels:
         app: portal-noticias
     spec:
-      topologySpreadconstraints:
+      topologySpreadConstraints:
       - maxSkew: 1
         topologyKey: kubernetes.io/hostname
         whenUnsatisfiable: ScheduleAnyway
@@ -55,13 +55,15 @@ spec:
             - containerPort: 80
           readinessProbe: 
             httpGet:
-            path: /
-            port: 80
-          livenessProbe:
-            httpGet:
               path: /
               port: 80
-          initialDelaySeconds: 15  
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 15 
+            periodSeconds: 30
+            failureThreshold: 10
           envFrom:
             - configMapRef:
                 name: portal-configmap
