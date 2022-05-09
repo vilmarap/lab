@@ -5,49 +5,67 @@ metadata:
 
 ---
 
-kind: ConfigMap
 apiVersion: v1
+kind: ConfigMap
 metadata:
-  name: db-configmap
+  name: portal-configmap
 data:
-  MYSQL_ROOT_PASSWORD: 
-  MYSQL_DATABASE: 
-  MYSQL_PASSWORD: 
+  IP_SISTEMA: http://localhost:30001
 
 ---
 
 apiVersion: v1
 kind: Service
-metadata:
-  name: svc-db-noticias
+metadata: 
+  name: svc-portal-noticias
 spec:
-  type: ClusterIP
-  ports:
-   - port: 3306
+  type: NodePort
+  ports: 
+    - port: 80
+      #targetPort: 80
+      nodePort: 30000
   selector:
-    app: db-noticias   
+    app: portal-noticias
 
 ---
 
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: db-noticias-deployment
+  name: portal-noticias-deployment
 spec: 
   template:
     metadata:
-      name: db-noticias
+      name: portal-noticias
       labels:
-        app: db-noticias
+        app: portal-noticias
     spec:
+      topologySpreadconstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app: portal-noticias
       containers:
-        - name: db-noticias-container
-          image: aluracursos/mysql-db:1
+        - name: portal-noticias-container
+          image: aluracursos/portal-noticias:1
+          imagePullPolicy: Always
           ports:
-            - containerPort: 3306
+            - containerPort: 80
+          readinessProbe: 
+            httpGet:
+            path: /
+            port: 80
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+          initialDelaySeconds: 15  
           envFrom:
             - configMapRef:
-                name: db-configmap
+                name: portal-configmap
+  replicas: 3
   selector:
     matchLabels:
-      app: db-noticias
+      app: portal-noticias
